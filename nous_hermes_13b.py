@@ -47,7 +47,8 @@ class NousHermes13BBot(PoeBot):
             "model": "NousResearch/Nous-Hermes-13b",
             "prompt": prompt,
             "max_tokens": 1000,
-            "stream_tokens": True,
+            "stop": ["</s>"],
+            # "stream_tokens": True,
         }
         headers = {
             "accept": "application/json",
@@ -55,15 +56,18 @@ class NousHermes13BBot(PoeBot):
             "Authorization": f"Bearer {self.TOGETHER_API_KEY}",
         }
 
-        with requests.post(BASE_URL, json=payload, headers=headers) as r:
-            for line in r.iter_lines(decode_unicode=True):
-                if line.startswith("data: "):
-                    line = line[6:]
-                if line and line != "[DONE]":
-                    yield json.loads(line)["choices"][0]["text"]
+        response = requests.post(BASE_URL, json=payload, headers=headers)
+        yield response.json()["output"]["choices"][0]["text"]
+
+        # NB: Streaming is bugged right now.
+        # with requests.post(BASE_URL, json=payload, headers=headers) as r:
+        #     for line in r.iter_lines(decode_unicode=True):
+        #         if line.startswith("data: "):
+        #             line = line[6:]
+        #         if line and line != "[DONE]":
+        #             yield json.loads(line)["choices"][0]["text"]
 
     async def get_response(self, query: QueryRequest) -> AsyncIterable[ServerSentEvent]:
         prompt = self.construct_prompt(query)
         async for word in self.query_together_ai(prompt):
-            if word != "</s>":
-                yield self.text_event(word)
+            yield self.text_event(word)
