@@ -9,7 +9,8 @@ import json
 from dataclasses import dataclass
 from typing import AsyncIterable
 
-import requests
+import httpx
+import httpx_sse
 from fastapi_poe import PoeBot
 from fastapi_poe.types import QueryRequest
 from sse_starlette.sse import ServerSentEvent
@@ -49,8 +50,12 @@ class NousHermes13BBot(PoeBot):
             "model": "NousResearch/Nous-Hermes-13b",
             "prompt": prompt,
             "max_tokens": 1000,
-            "stop": ["</s>"],
-            # "stream_tokens": True,
+            "stop": ["</s>", "<human>:"],
+            "stream_tokens": True,
+            "temperature": 0.7,
+            "top_p": 0.7,
+            "top_k": 50,
+            "repetition_penalty": 1,
         }
         headers = {
             "accept": "application/json",
@@ -58,16 +63,14 @@ class NousHermes13BBot(PoeBot):
             "Authorization": f"Bearer {self.TOGETHER_API_KEY}",
         }
 
-        response = requests.post(BASE_URL, json=payload, headers=headers)
-        yield response.json()["output"]["choices"][0]["text"]
-
-        # NB: Streaming is bugged right now.
-        # with requests.post(BASE_URL, json=payload, headers=headers) as r:
-        #     for line in r.iter_lines(decode_unicode=True):
-        #         if line.startswith("data: "):
-        #             line = line[6:]
-        #         if line and line != "[DONE]":
-        #             yield json.loads(line)["choices"][0]["text"]
+        async with httpx.AsyncClient() as aclient:
+            async with httpx_sse.aconnect_sse(
+                aclient, "POST", BASE_URL, headers=headers, json=payload
+            ) as event_source:
+                async for event in event_source.aiter_sse():
+                    if event.data != "[DONE]":
+                        token = json.loads(event.data)["choices"][0]["text"]
+                        yield token
 
     async def get_response(self, query: QueryRequest) -> AsyncIterable[ServerSentEvent]:
         prompt = self.construct_prompt(query)
