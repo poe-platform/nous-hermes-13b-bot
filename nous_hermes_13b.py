@@ -31,7 +31,6 @@ class NousHermes13B(PoeBot):
     TOGETHER_API_KEY: str  # Together.ai api key
 
     def construct_prompt(self, query: QueryRequest):
-        prompt = "\n"
         prompt = BASE_PROMPT
         for message in query.query:
             if message.role == "user":
