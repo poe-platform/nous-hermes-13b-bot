@@ -1,8 +1,13 @@
-Source code for the bot hosted at: https://poe.com/Nous-Hermes-13b
+# Nous Hermes 13B Bot
 
-This is an an implementation of Nous-Hermes-13B using the
-[Poe-Protocol](https://developer.poe.com/api-bots/poe-protocol-specification). In order
-to run this yourself, [setup modal](https://modal.com/docs/guide#getting-started), setup
-a secret on modal.com with your Poe security key and your Together API Key, rename the
-secret in main.py and then run `modal serve main.py`. The command will deploy this app
-and output a url. Use that url to create a poe bot at: https://poe.com/create_bot?api=1
+Chatbot powered by the Nous-Hermes-13B model.
+
+## How do I run this myself?
+
+- Refer to the quick start for general instructions on how to create server bots and
+  deploy them on Modal.
+- In Modal, create a secret named "nous-hermes-13b-secret" containing both your
+  TOGETHER_API_KEY and the POE_ACCESS_KEY.
+- Run modal serve main.py
+- Create a bot on [poe.com](https://poe.com/create_bot?server=1) and provide your server
+  url and access key
